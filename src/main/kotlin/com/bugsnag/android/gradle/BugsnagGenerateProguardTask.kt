@@ -1,8 +1,11 @@
 package com.bugsnag.android.gradle
 
+import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
+import com.bugsnag.android.gradle.internal.*
 import com.bugsnag.android.gradle.internal.VariantTaskCompanion
 import com.bugsnag.android.gradle.internal.dependsOn
+import com.bugsnag.android.gradle.internal.findMappingFileProguard7
 import com.bugsnag.android.gradle.internal.forBuildOutput
 import com.bugsnag.android.gradle.internal.intermediateForGenerateJvmMapping
 import com.bugsnag.android.gradle.internal.outputZipFile

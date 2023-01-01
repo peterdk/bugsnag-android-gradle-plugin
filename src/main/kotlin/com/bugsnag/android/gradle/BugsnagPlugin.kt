@@ -8,16 +8,17 @@ import com.android.build.gradle.api.ApkVariantOutput
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
 import com.android.build.gradle.tasks.ExternalNativeBuildTask
+import com.bugsnag.android.gradle.BugsnagInstallJniLibsTask.Companion.register
 import com.bugsnag.android.gradle.BugsnagInstallJniLibsTask.Companion.resolveBugsnagArtifacts
+import com.bugsnag.android.gradle.BugsnagReleasesTask.Companion.register
+import com.bugsnag.android.gradle.BugsnagUploadJsSourceMapTask.Companion.register
+import com.bugsnag.android.gradle.BugsnagUploadProguardTask.Companion.register
+import com.bugsnag.android.gradle.internal.*
 import com.bugsnag.android.gradle.internal.AgpVersions
-import com.bugsnag.android.gradle.internal.BugsnagHttpClientHelper
-import com.bugsnag.android.gradle.internal.ExternalNativeBuildTaskUtil
 import com.bugsnag.android.gradle.internal.NDK_SO_MAPPING_DIR
-import com.bugsnag.android.gradle.internal.NdkToolchain
 import com.bugsnag.android.gradle.internal.TASK_JNI_LIBS
 import com.bugsnag.android.gradle.internal.UNITY_SO_COPY_DIR
 import com.bugsnag.android.gradle.internal.UNITY_SO_MAPPING_DIR
-import com.bugsnag.android.gradle.internal.UploadRequestClient
 import com.bugsnag.android.gradle.internal.dependsOn
 import com.bugsnag.android.gradle.internal.getDexguardAabTaskName
 import com.bugsnag.android.gradle.internal.hasDexguardPlugin
@@ -353,6 +354,16 @@ class BugsnagPlugin : Plugin<Project> {
                         it.dependsOn(project.tasks.named(taskName))
                     }
                 }
+                else if (project.hasProguardPlugin())
+                {
+                    val taskName = getProguardAabTaskName(variant)
+                    releaseUploadTask.configure {
+                        it.dependsOn(generateProguardTaskProvider)
+                    }
+                    generateProguardTaskProvider.configure {
+                        it.dependsOn(project.tasks.named(taskName))
+                    }
+                }
             }
             if (uploadSourceMapProvider != null) {
                 variant.register(project, uploadSourceMapProvider, reactNativeEnabled)
@@ -420,7 +431,7 @@ class BugsnagPlugin : Plugin<Project> {
     }
 
     private fun Project.isJvmMinificationEnabled(variant: BaseVariant) =
-        variant.buildType.isMinifyEnabled || hasDexguardPlugin()
+        variant.buildType.isMinifyEnabled || hasDexguardPlugin() || hasProguardPlugin()
 
     private fun registerManifestUuidTask(
         project: Project,
@@ -450,7 +461,6 @@ class BugsnagPlugin : Plugin<Project> {
         val taskName = taskNameForUploadJvmMapping(output)
         val requestOutputFileProvider = intermediateForMappingFileRequest(project, output)
         val gzipOutputProvider = intermediateForGenerateJvmMapping(project, output)
-
         return BugsnagUploadProguardTask.register(project, taskName) {
             requestOutputFile.set(requestOutputFileProvider)
             httpClientHelper.set(httpClientHelperProvider)

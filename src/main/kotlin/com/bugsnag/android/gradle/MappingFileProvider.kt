@@ -2,6 +2,7 @@ package com.bugsnag.android.gradle
 
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.BaseVariantOutput
+import com.bugsnag.android.gradle.internal.*
 import com.bugsnag.android.gradle.internal.findMappingFileDexguard9
 import com.bugsnag.android.gradle.internal.findMappingFileDexguardLegacy
 import com.bugsnag.android.gradle.internal.getDexguardMajorVersionInt
@@ -40,6 +41,12 @@ private fun findMappingFiles(
                     val file = findMappingFileDexguardLegacy(project, variant, variantOutput)
                     project.layout.files(file)
                 }
+            }
+        }
+        project.hasProguardPlugin() -> {
+            project.provider {
+                val files = findMappingFileProguard7(project, variant)
+                project.layout.files(files)
             }
         }
         else -> {
